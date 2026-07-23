@@ -1,0 +1,292 @@
+{
+  "name": "Live Carrier Vetting & FMCSA Compliance Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Carrier Compliance & FMCSA Vetting Portal",
+        "formDescription": "Enter a USDOT Number to verify carrier operating authority and safety status.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "USDOT Number",
+              "fieldType": "number",
+              "fieldName": "dot_number",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -384,
+        -208
+      ],
+      "id": "99e4e4bc-a592-44a8-a525-c9b04c19011c",
+      "name": "On form submission",
+      "webhookId": "6c729232-5655-40f6-b0fc-6a2890d863e4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the DOT number from the Form Submission\nconst inputDot = $input.first().json.body?.dot_number || \"221515\";\n\nreturn [\n  {\n    json: {\n      content: {\n        carrier: {\n          dotNumber: inputDot,\n          legalName: \"FAST FREIGHT EXPRESS LLC\",\n          allowedToOperate: \"Y\", // Change to \"N\" to test DENIED routing\n          statusCode: \"A\",       // \"A\" = Active, \"I\" = Inactive\n          driverOosRate: 12.5    // Out-of-service %. Change to > 25 to test FLAGGED routing\n        }\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -208
+      ],
+      "id": "8901d590-2915-426d-81c9-267b3c0c23a7",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract carrier details from the previous node payload\nconst carrier = $input.first().json.content.carrier;\n\nconst dotNumber = carrier.dotNumber;\nconst legalName = carrier.legalName;\nconst allowedToOperate = carrier.allowedToOperate;\nconst statusCode = carrier.statusCode;\nconst oosRate = carrier.driverOosRate || 0;\n\nlet status = \"APPROVED\";\nlet rejectionReasons = [];\n\n// Rule 1: Verify Operating Authority Status\nif (allowedToOperate !== \"Y\" || statusCode !== \"A\") {\n  status = \"DENIED\";\n  rejectionReasons.push(\"Operating Authority is NOT Active or Revoked.\");\n}\n\n// Rule 2: Out of Service (OOS) Safety Threshold Check (> 25% is high-risk)\nif (oosRate > 25) {\n  status = \"FLAGGED\";\n  rejectionReasons.push(`High Driver OOS Rate: ${oosRate}% (Safety Threshold: 25%)`);\n}\n\nreturn [\n  {\n    json: {\n      dotNumber,\n      legalName,\n      status,\n      allowedToOperate,\n      oosRate,\n      rejectionReasons: rejectionReasons.join(\" | \") || \"None\",\n      evaluatedAt: new Date().toISOString()\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        -208
+      ],
+      "id": "adf9d640-810e-47fb-8272-950235649d92",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "73f00ee4-bbf0-4904-a56a-cb1254df5753",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "APPROVED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        -208
+      ],
+      "id": "30ccd079-9a5f-426b-9b43-328c19ca919a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qQAxbHYaTFrSjy4W_t8vjI57xGCUXuoDhLhq6F0Yi1E",
+          "mode": "list",
+          "cachedResultName": "Emails",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qQAxbHYaTFrSjy4W_t8vjI57xGCUXuoDhLhq6F0Yi1E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 260664139,
+          "mode": "list",
+          "cachedResultName": "Sheet5",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qQAxbHYaTFrSjy4W_t8vjI57xGCUXuoDhLhq6F0Yi1E/edit#gid=260664139"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        544,
+        -432
+      ],
+      "id": "ef76765a-2ed7-4b75-9270-9d09ad09a383",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PLK1yLXz0jVf7ryi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BGS5UV31V",
+          "mode": "list",
+          "cachedResultName": "social"
+        },
+        "text": "=✅ CARRIER APPROVED FOR DISPATCH Company: {{ $json.legalName }} (DOT: {{ $json.dotNumber }}) Status: Active | Driver OOS Rate: {{ $json.oosRate }}%",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        544,
+        -224
+      ],
+      "id": "8cae2446-da10-405e-9592-043a7ea34631",
+      "name": "Send a message",
+      "webhookId": "5dce29bc-fd4c-4e5f-8ea6-7c85b54ea166",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "QDeCqaK1edS3ArHk",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BJ1SAB7QQ",
+          "mode": "list",
+          "cachedResultName": "all-n8n-testing"
+        },
+        "text": "=🚨 CARRIER COMPLIANCE ALERT - DO NOT BOOK Company: {{ $json.legalName }} (DOT: {{ $json.dotNumber }}) Status: {{ $json.status }} Reason: {{ $json.rejectionReasons }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        544,
+        -16
+      ],
+      "id": "d53c3d1b-bb3d-412d-83d1-d39f08dc5845",
+      "name": "Send a message1",
+      "webhookId": "424ed50b-e064-4b8b-bc42-22969d5639ca",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "QDeCqaK1edS3ArHk",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "shahveershahid50@gmail.com",
+        "subject": "=Compliance Risk Alert: DOT {{ $json.dotNumber }}",
+        "message": "Notification sent to the internal dispatch team to halt booking immediately.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        192
+      ],
+      "id": "87520fca-fe3c-47d8-b35e-84d56ffdf3ef",
+      "name": "Send a message2",
+      "webhookId": "a34e3ad4-87b8-4ed3-9ec1-b5218370a7e3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PQ2uOxHw9SpKfOYU",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "26a402d5-2bad-4b0f-94b3-1d1bac9a12e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9f68c03645af2698093b944f39c6c09f20dc21fc528a81fdb26591e884ce4030"
+  },
+  "nodeGroups": [],
+  "id": "4o7NcqLiJvOGfbWT",
+  "tags": []
+}
