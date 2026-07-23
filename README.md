@@ -1,31 +1,7 @@
-# FMCSA Carrier Vetting & Risk Evaluation Engine (n8n)
+FMCSA Carrier Vetting & Risk Evaluation Engine
+An automated carrier compliance and risk evaluation workflow built with n8n. This solution streamlines carrier onboarding for freight brokerages and 3PLs by automatically validating USDOT operating authority, evaluating safety metrics, and enforcing automated pass/fail routing to prevent double-brokering and cargo fraud.
 
-An automated carrier compliance and risk evaluation workflow built with **n8n**. This solution streamlines carrier onboarding for freight brokerages and 3PLs by automatically validating USDOT operating authority, evaluating safety metrics, and enforcing automated pass/fail routing to prevent double-brokering and cargo fraud.
-
----
-
-## 📸 Workflow Architecture
-
-```text
- [Form Submission Trigger] (Dispatcher inputs USDOT Number)
-            │
-            ▼
- [FMCSA SAFER API Engine] (Queries Carrier Safety & Authority Data)
-            │
-            ▼
- [Risk Evaluation Engine] (JavaScript Code Node: Authority & OOS Checks)
-            │
-            ├── (Status == APPROVED) ──> [Google Sheets] (Log Audit Trail)
-            │                                 │
-            │                                 ▼
-            │                          [Slack Channel] (Green Approval Alert)
-            │
-            └── (Status == DENIED/FLAGGED) ──> [Slack Channel] (Red Risk Alert)
-                                                      │
-                                                      ▼
-                                               [Gmail] (Compliance Team Escalation)
-<img width="1680" height="929" alt="Screenshot 2026-07-23 at 9 57 32 AM" src="https://github.com/user-attachments/assets/7c8665d9-bf5d-449f-8711-4df6b07e65e9" />
-
+📸 Workflow Canvas
 🚀 Key Features & Operational Business Impact
 Real-Time Authority Verification: Instantly checks if an MC/DOT operating authority is active (statusCode: "A") and permitted to operate (allowedToOperate: "Y").
 
@@ -70,5 +46,4 @@ Activate & Test:
 Publish the workflow.
 
 Open the generated Form URL, enter a test USDOT number (e.g., 221515), and execute.
-
-<
+<img width="1680" height="929" alt="Screenshot 2026-07-23 at 9 57 32 AM" src="https://github.com/user-attachments/assets/7f59c638-a736-4609-8021-c4a3f1cdf8f4" />
