@@ -24,6 +24,8 @@ An automated carrier compliance and risk evaluation workflow built with **n8n**.
                                                       │
                                                       ▼
                                                [Gmail] (Compliance Team Escalation)
+<img width="1680" height="929" alt="Screenshot 2026-07-23 at 9 57 32 AM" src="https://github.com/user-attachments/assets/7c8665d9-bf5d-449f-8711-4df6b07e65e9" />
+
 🚀 Key Features & Operational Business Impact
 Real-Time Authority Verification: Instantly checks if an MC/DOT operating authority is active (statusCode: "A") and permitted to operate (allowedToOperate: "Y").
 
@@ -69,4 +71,4 @@ Publish the workflow.
 
 Open the generated Form URL, enter a test USDOT number (e.g., 221515), and execute.
 
-<img width="1680" height="929" alt="Screenshot 2026-07-23 at 9 57 32 AM" src=
+<
